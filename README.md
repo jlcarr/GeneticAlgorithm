@@ -1,6 +1,6 @@
 # GeneticAlgorithm
 
-A C++ library for perform genetic algorithms
+A C++ library for performing genetic algorithms
 
 ## Features
 * Uses standard C++11 library.

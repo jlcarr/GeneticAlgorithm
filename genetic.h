@@ -2,7 +2,7 @@
 #define GENETIC_LIB
 
 #include <iostream> //in case of outputs
-#include <vector> //to hold population
+#include <vector> //to hold population and solution vector
 #include <cstdlib> //for random
 
 using namespace std;
@@ -150,6 +150,75 @@ double geneticOptimize(double (*fTarget)(double), int population, int generation
 			
 			//crossover weights
 			newCreatures[creature] = breedInRange(creatures[mama], creatures[papa], minRange, maxRange, bitResoluion);
+		}
+		
+		//update creatures
+		creatures = newCreatures;
+	}
+	
+	//cout << "best x=" << bestX << " gives f(x)=" << bestY << "\n";
+	
+	return bestX;
+}
+
+
+//Genetic algorithm for optimization of a single input function, given a range and bit resolution
+vector<double> geneticVectorOptimize(double (*fTarget)(vector<double>), int size, int population, int generations, double minRange, double maxRange, int bitResoluion){
+	//save best result
+	vector<double> bestX(size);
+	for(auto i = bestX.begin(); i != bestX.end(); ++i){
+		*i = minRange + (maxRange-minRange)*(rand()/(double)RAND_MAX);
+	}
+	double bestY = fTarget(bestX);
+	
+	//generate initial population
+	vector<vector<double>> creatures(population,vector<double>(size));
+	for(auto creature = creatures.begin(); creature != creatures.end(); ++creature){
+		for(auto gene = creature->begin(); gene != creature->end(); ++gene){
+			*gene = minRange + (maxRange-minRange)*(rand()/(double)RAND_MAX);
+		}
+	}
+	vector<vector<double>> newCreatures = creatures;
+	
+	//perform evolution
+	double temp;
+	vector<double> fitness(population);
+	for(int generation = 0; generation < generations; generation++){
+		//cout << "\nGeneration: " << generation << "\n";
+		
+		//evaluate fitness of each creature
+		//cout << "Values:\n";
+		for(int i=0; i<population; i++){
+			fitness[i] = fTarget(creatures[i]);
+			//cout << "Creature: " << i << " xvalue: " << creatures[i] << " yvalue: " << fitness[i] << "\n";
+			//is best?
+			if(fitness[i]>bestY){
+				bestX = creatures[i];
+				bestY = fitness[i];
+			}
+		}
+		//normalize fitness
+		//cout << "Fitnesses:\n";
+		double maxTemp=minRange, minTemp = maxRange;
+		for(int i=0; i<population; i++){
+			if(fitness[i]>maxTemp) maxTemp = fitness[i];
+			if(fitness[i]<minTemp) minTemp = fitness[i];
+		}
+		if(maxTemp != minTemp) for(int i=0; i<population; i++) fitness[i] = (fitness[i]-minTemp)/(maxTemp-minTemp);
+		//for(int i=0; i<population; i++) cout << "Creature: " << i << " fitness: " << fitness[i] << "\n";
+		
+		//mate
+		//cout << "Mating:\n";
+		int mama, papa;
+		for(int creature=0; creature<population; creature++){
+			//select parents
+			mama = fitnessSelection(fitness);
+			papa = fitnessSelection(fitness);
+			//cout << "mama: " << mama << " papa: " << papa << "\n";
+			//crossover inputs
+			for(int gene = 0; gene<size; ++gene){
+				newCreatures[creature][gene] = breedInRange(creatures[mama][gene], creatures[papa][gene], minRange, maxRange, bitResoluion);
+			}
 		}
 		
 		//update creatures
